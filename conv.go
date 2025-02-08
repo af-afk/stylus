@@ -13,3 +13,8 @@ func BUint256ToBig(x []byte) (*big.Int, error) {
 		return nil, fmt.Errorf("calldata")
 	}
 }
+
+func BInt256ToBig(x []byte) (*big.Int, error) {
+	b := new(big.Int).SetBytes(x)
+	return b, nil
+}

@@ -14,10 +14,26 @@ type Storage struct {
 }
 
 //stylus uint256
-func (s Storage) Burn(x *big.Int) ([]byte, error) {
-	y := new(big.Int).SetInt64(123)
-	y.Add(x, y)
+func (s Storage) Add(x *big.Int) ([]byte, error) {
+	y := s.Counter.Get()
+	y.Add(y, x)
+	s.Counter.Set(y)
 	var b [32]byte
 	x.FillBytes(b[:])
 	return b[:], nil
+}
+
+func (s Storage) Sub(x *big.Int) ([]byte, error) {
+	y := s.Counter.Get()
+	y.Sub(y, x)
+	s.Counter.Set(y)
+	var b [32]byte
+	x.FillBytes(b[:])
+	return b[:], nil
+}
+
+func (s Storage) Count() (b []byte, err error) {
+	b = make([]byte, 32)
+	s.Counter.Get().FillBytes(b)
+	return
 }

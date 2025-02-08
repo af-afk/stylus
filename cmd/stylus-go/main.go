@@ -7,13 +7,13 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"go/ast"
-	"os"
 	"go/parser"
 	"go/token"
 	"log"
-	_ "embed"
+	"os"
 	"strings"
 	"unicode"
 
@@ -86,7 +86,7 @@ STRUCTSEARCH:
 					// setup func.
 					var preambleFields []PreambleField
 					for _, f := range st.Fields.List {
-						if len(f.Names) == 0{
+						if len(f.Names) == 0 {
 							log.Fatalf("parse struct args: anon not allowed")
 						}
 						for _, n := range f.Names {
@@ -95,7 +95,7 @@ STRUCTSEARCH:
 								log.Fatalf("parse struct args: bad expr: %v", err)
 							}
 							preambleFields = append(preambleFields, PreambleField{
-								Name: n.Name,
+								Name:    n.Name,
 								SetupFn: x,
 							})
 						}
@@ -122,8 +122,8 @@ STRUCTSEARCH:
 					continue
 				}
 				// Now that we found a function, check if it takes a pointer receiver for
-				// a structure.
-				if fn.Type == nil || fn.Type.Params == nil || fn.Doc == nil {
+				// a structure, and that it's type is defined.
+				if fn.Recv == nil || fn.Type == nil || fn.Type.Params == nil {
 					continue
 				}
 				// If the function's not titled, we want to assume they're not exporting this.
@@ -139,12 +139,21 @@ STRUCTSEARCH:
 				// and the external-facing type, we can start to stub out the unpacking
 				// of the byte array and the conversion in the generated code by using
 				// one of the generated functions this package has in its internal path.
-				explainedArgs, localArgs, err := explainArgs(fn.Doc.List, fn.Type.Params.List)
-				if err != nil {
-					log.Fatalf("explain args: %v: %v", fn, err)
+				var docList []*ast.Comment
+				if fn.Doc != nil {
+					docList = fn.Doc.List
 				}
-				// Create the conversion functions now from a word:
-				convFns := argsToConvFunctions(explainedArgs, localArgs)
+				// If the function has params, then we need to start translating them.
+				var explainedArgs, convFns []string
+				if fn.Type.Params != nil {
+					var localArgs []string
+					explainedArgs, localArgs, err = explainArgs(docList, fn.Type.Params.List)
+					if err != nil {
+						log.Fatalf("explain args: %v: %v", fn, err)
+					}
+					// Create the conversion functions now from a word:
+					convFns = argsToConvFunctions(explainedArgs, localArgs)
+				}
 				// Now it's time for us to generate entrypoint code. Let's start by computing
 				// the entrypoint receiver here.
 				sel := createSelector(fn.Name.Name, explainedArgs...)
@@ -156,16 +165,17 @@ STRUCTSEARCH:
 			}
 		}
 	}
+	// Looks like we're done! It's time to write the finale, then try to parse the generated code.
 	fmt.Fprint(&explainedBuf, `
 	return 1
 }
 `)
-	// Looks like we're done! It's time to write the finale, then try to parse the generated code.
 	testBuf := explainedBuf
-	if _, err := parser.ParseFile(fst, "",&testBuf, parser.AllErrors); err != nil {
+	if _, err := parser.ParseFile(fst, "", &testBuf, parser.AllErrors); err != nil {
 		explainedBuf.WriteTo(os.Stderr)
 		panic(fmt.Sprintf("bad generated code (REPORTME): %v", err))
 	}
+	// Looks like everything went okay. We can print the generated code here.
 	genF, err := os.OpenFile("stylus_generated.go", os.O_CREATE|os.O_WRONLY, 0770)
 	if err != nil {
 		log.Fatal("open file stylus_generated.go: ", err)
@@ -203,30 +213,21 @@ func argsToConvFunctions(explainedArgs, localArgs []string) (convFns []string) {
 }
 
 func explainArgs(docs []*ast.Comment, args []*ast.Field) (explainedArgs []string, localArgs []string, err error) {
-	for _, d := range docs {
-		// Let's try to match the local type with the estimated type from this
-		// lookup. If there's anything we can't convert, then we'll report it
-		// now. Let's try to expand the form where we might have multiple
-		// arguments concenated together in their type.
-		for _, a := range args {
-			lt, err := exprToLocalType(a.Type)
-			if err != nil {
-				return nil, nil, fmt.Errorf("local type lookup: %v", err)
-			}
-			for range a.Names {
-				localArgs = append(localArgs, lt)
-			}
+	// Let's try to match the local type with the estimated type from this
+	// lookup. If there's anything we can't convert, then we'll report it
+	// now. Let's try to expand the form where we might have multiple
+	// arguments concenated together in their type.
+	for _, a := range args {
+		lt, err := exprToLocalType(a.Type)
+		if err != nil {
+			return nil, nil, fmt.Errorf("local type lookup: %v", err)
 		}
-		// If no-one's supplied the stylus prefix, then we can simply convert
-		// the local type representation here to the external-facing form.
-		if !strings.HasPrefix(d.Text, "//stylus") {
-			explainedArgs = make([]string, len(localArgs))
-			for i, s := range localArgs {
-				if explainedArgs[i], err = argToPreferredType(s); err != nil {
-					return nil, nil, fmt.Errorf("preferred type conv: %v", err)
-				}
-			}
-		} else {
+		for range a.Names {
+			localArgs = append(localArgs, lt)
+		}
+	}
+	for _, d := range docs {
+		if strings.HasPrefix(d.Text, "//stylus") {
 			// Match everything after "//stylus ".
 			explainedArgs = strings.Split(d.Text, " ")[1:]
 			if l := len(explainedArgs); l != len(localArgs) {
@@ -238,6 +239,15 @@ func explainArgs(docs []*ast.Comment, args []*ast.Field) (explainedArgs []string
 					return nil, nil, fmt.Errorf("arguments explanation: %v != %v: %v", localArgs[i], s, err)
 				}
 			}
+			return
+		}
+	}
+	// If no-one's supplied the stylus prefix, then we can simply convert
+	// the local type representation here to the external-facing form.
+	explainedArgs = make([]string, len(localArgs))
+	for i, s := range localArgs {
+		if explainedArgs[i], err = argToPreferredType(s); err != nil {
+			return nil, nil, fmt.Errorf("preferred type conv: %v", err)
 		}
 	}
 	return

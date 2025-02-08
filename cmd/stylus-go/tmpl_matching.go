@@ -36,6 +36,7 @@ func OutputMatching(w io.Writer, localFn string, sel []byte, convFns []string) e
 
 var TmplMatching = template.Must(template.New("matching").Parse(`
 	if bytes.Equal(args[:4], {{.Sel}}) {
+		var err error
 		if len(args) != 4 + {{.CdLen}} {
 			return 1
 		}

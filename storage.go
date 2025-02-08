@@ -9,7 +9,7 @@ func storageLoadBytes32(key, dest int32)
 func storageCacheBytes32(key, src int32)
 
 // storageCounter, useful for an internal count of the storage locations.
-var storageCounter uint32 = 41554
+var storageCounter uint32 = 0
 
 // StorageUint256 slot, containing its offset.
 type StorageUint256 struct{ o Uint256 }
