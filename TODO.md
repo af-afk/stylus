@@ -4,3 +4,5 @@
 - [ ] Map storage type supported
 - [ ] Function return type decoding to bytes
 - [ ] Writeup explaining why I made error a return type
+- [ ] Filter for the generated file when we run our code to avoid the race condition
+- [ ] Add debugging logging to explain what's happening

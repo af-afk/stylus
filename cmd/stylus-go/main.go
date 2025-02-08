@@ -120,7 +120,13 @@ STRUCTSEARCH:
 					continue
 				}
 				// If the function's not connected to our focused struct, we skip it.
-
+				if len(fn.Recv.List) == 0 {
+					continue
+				}
+				receiverName, err := exprToLocalType(fn.Recv.List[0].Type)
+				if receiverName != focusedStruct && receiverName != "*" + focusedStruct {
+					continue
+				}
 				// Optionally explain the arguments by searching for a comment of "stylus
 				// (uint256,?)+", which we can use to hint the appropriate pattern to
 				// decode with later in the codegen. If the comment does not exist, then
