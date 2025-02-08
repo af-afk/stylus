@@ -47,6 +47,6 @@ func userEntrypoint(cdlen int32) int32 {
 	if len(args) < 4 {
 		return 1
 	}
-	var sr {{.StructName}}
-	{{range .Args}}sr.{{.Name}} = {{.SetupFn}}(){{end}}`,
+	var sr {{.StructName}}{{range .Args}}
+	sr.{{.Name}} = {{.SetupFn}}(){{end}}`,
 ))

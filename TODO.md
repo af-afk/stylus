@@ -6,3 +6,5 @@
 - [ ] Writeup explaining why I made error a return type
 - [ ] Filter for the generated file when we run our code to avoid the race condition
 - [ ] Add debugging logging to explain what's happening
+- [ ] Have some high level code for calling out to other contracts
+- [ ] Local type caching for storage
