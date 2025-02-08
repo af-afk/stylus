@@ -1,4 +1,11 @@
 
+.PHONY: build
+
+build: go-on-stylus.wasm
+
+stylus_generated.go: entry.go
+	@go generate
+
 go-on-stylus.wasm: $(shell find . -name '*.go') Makefile
 	@tinygo build \
 		-o go-on-stylus2.wasm \

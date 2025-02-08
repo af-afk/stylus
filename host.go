@@ -11,3 +11,9 @@ func WriteResult(data int32, len int32)
 
 //go:wasmimport vm_hooks storage_flush_cache
 func StorageFlushCache(clear bool)
+
+//go:wasmimport vm_hooks storage_load_bytes32
+func StorageLoadBytes32(key, dest int32)
+
+//go:wasmimport vm_hooks storage_cache_bytes32
+func StorageCacheBytes32(key, src int32)

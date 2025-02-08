@@ -50,4 +50,5 @@ var TmplMatching = template.Must(template.New("matching").Parse(`
 		} else {
 			return 0
 		}
-	}`))
+	}`,
+))
