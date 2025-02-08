@@ -20,17 +20,6 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-type (
-	funcInfo struct {
-		name string
-		args []funcArg
-	}
-
-	funcArg struct {
-		localtype, abitype string
-	}
-)
-
 func main() {
 	// First, we find a file that contains a struct that's marked as "stylus
 	// entrypoint" as its comment. Then we start to look for associated
@@ -182,7 +171,7 @@ STRUCTSEARCH:
 	}
 	defer genF.Close()
 	if _, err := explainedBuf.WriteTo(genF); err != nil {
-		log.Fatalf("open file stylus_generated.go: ", err)
+		log.Fatal("open file stylus_generated.go: ", err)
 	}
 }
 
