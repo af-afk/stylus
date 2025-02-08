@@ -4,6 +4,7 @@ package main
 
 import (
 	"math/big"
+	"fmt"
 
 	"github.com/af-afk/stylus"
 )
@@ -36,4 +37,9 @@ func (s Storage) Count() (b []byte, err error) {
 	b = make([]byte, 32)
 	s.Counter.Get().FillBytes(b)
 	return
+}
+
+func (s Storage) FakeDie() (b []byte, err error) {
+	msg := "uhoh!"
+	return []byte(msg), fmt.Errorf(msg)
 }
