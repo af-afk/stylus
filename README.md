@@ -1,4 +1,8 @@
 # Go on Stylus
 
-This code includes a code generator (in cmd/stylus-go), an example (in cmd/counter), and a
-library at the root of the repo.
+Go on Stylus is a code generator for compiling [Tinygo](https://tinygo.org) code to
+Stylus-compatible WASM. It does so using a code generator.
+
+## Example contract
+
+The following contract (located at cmd/counter/entry.go) simply adds, or subtracts:
