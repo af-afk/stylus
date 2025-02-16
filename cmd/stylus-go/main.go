@@ -7,9 +7,9 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
-	"path/filepath"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/af-afk/stylus/cmd/stylus-go/internal"
 )
@@ -19,13 +19,13 @@ func main() {
 		usage()
 	}
 	switch os.Args[1] {
-	case "gen":
+	case "g", "ge", "gen":
 		if args := os.Args[2:]; len(args) == 0 || args[0] != "-" {
 			genDirs()
 		} else {
 			genStdin()
 		}
-	case "build":
+	case "b", "bu", "bui", "build":
 		build()
 	default:
 		usage()
@@ -94,14 +94,14 @@ func build() {
 	// arguments, so we simply construct the arguments, then use it with
 	// os/exec. We can optionally use wasm-opt with an extra optional
 	// argument (-wasm-opt).
-	useWasmOpt := false
+	dontUseWasmopt := false
 	outN := "contract.wasm"
 	ignoreNext := false
 	for i, a := range os.Args[2:] {
 		switch a {
-		case "-wasm-opt":
-			useWasmOpt = true
-		case "-out":
+		case "-no-wasm-opt":
+			dontUseWasmopt = true
+		case "-o", "-out":
 			// If -build is used as the last positional param, or -wasm-opt is the
 			// next argument, we error with usage.
 			if i+1 == len(os.Args[2:]) || os.Args[2+i] == "-wasm-opt" {
@@ -120,7 +120,7 @@ func build() {
 	if err != nil {
 		log.Fatalf("abs out file %#v: ", outN, err)
 	}
-	tmpF, err := os.CreateTemp(filepath.Dir(outN), "*.wasm")
+	tmpF, err := os.CreateTemp(filepath.Dir(outN), "tmp-*.wasm")
 	if err != nil {
 		log.Fatal("create temp: ", err)
 	}
@@ -148,36 +148,42 @@ func build() {
 	tinygoCmd.Stdout = os.Stdout
 	tinygoCmd.Stderr = os.Stderr
 	if err := tinygoCmd.Err; err != nil {
+		delF(tmpName)
 		log.Fatal("tinygo cmd: ", err)
 	}
 	if err := tinygoCmd.Run(); err != nil {
+		delF(tmpName)
 		log.Fatal("tinygo run: ", err)
 	}
-	if useWasmOpt {
-		wasmoptCmd := exec.Command("wasm-opt", wasmOptArgs...)
-		wasmoptCmd.Stdout = os.Stdout
-		wasmoptCmd.Stderr = os.Stderr
-		if err := wasmoptCmd.Err; err != nil {
-			log.Fatal("wasm-opt cmd: ", err)
-		}
-		if err := wasmoptCmd.Run(); err != nil {
-			log.Fatal("wasm-opt run: ", err)
-		}
-		// Looks like we're done. We need to remove the old temporary file.
-		if err := os.Remove(tmpName); err != nil {
-			log.Fatal("remove tmpfile %#v: %v", tmpName, err)
+	if dontUseWasmopt {
+		// Since the user elected not to use wasm-opt, we must move the temporary
+		// file, then shut down.
+		if err := os.Rename(tmpName, outN); err != nil {
+			log.Fatalf("rename %#v to %#v: %v", tmpName, outN, err)
 		}
 		return
 	}
-	// Since the user elected not to use wasm-opt, we must move the temporary
-	// file.
-	if err := os.Rename(tmpName, outN); err != nil {
-		log.Fatalf("rename %#v to %#v: %v", tmpName, outN, err)
+	wasmoptCmd := exec.Command("wasm-opt", wasmOptArgs...)
+	wasmoptCmd.Stdout = os.Stdout
+	wasmoptCmd.Stderr = os.Stderr
+	if err := wasmoptCmd.Err; err != nil {
+		log.Fatal("wasm-opt cmd: ", err)
+	}
+	if err := wasmoptCmd.Run(); err != nil {
+		log.Fatal("wasm-opt run: ", err)
+	}
+	// Looks like we're done. We need to remove the old temporary file.
+	delF(tmpName)
+}
+
+func delF(n string) {
+	if err := os.Remove(n); err != nil {
+		log.Fatal("remove tmpfile %#v: %v", n, err)
 	}
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, `Usage of %s: [[gen [-|path...]]|[build [-wasm-opt] [-out contract.wasm]]]
+	fmt.Fprintf(os.Stderr, `Usage of %s: [[g[en] [-|path...]]|[b[uild] [-no-wasm-opt] [-o contract.wasm]]]
 `,
 		os.Args[0],
 	)
