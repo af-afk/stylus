@@ -16,7 +16,10 @@ type File struct {
 	Decls []ast.Decl
 }
 
-func Generate(w io.Writer, fst *token.FileSet, files ...File) error {
+func Generate(out, werr io.Writer, fst *token.FileSet, files ...File) error {
+	if len(files) == 0 {
+		return fmt.Errorf("no files passed")
+	}
 	// We try to find a structure that serves as the entrypoint for this
 	// code. We have to search the AST twice to find it before proceeding.
 	var focusedStruct string
@@ -152,9 +155,10 @@ STRUCTSEARCH:
 `)
 	testBuf := explainedBuf
 	if _, err := parser.ParseFile(fst, "", &testBuf, parser.AllErrors); err != nil {
+		explainedBuf.WriteTo(werr)
 		return fmt.Errorf("bad generated code: %v", err)
 	}
-	if _, err := explainedBuf.WriteTo(w); err != nil {
+	if _, err := explainedBuf.WriteTo(out); err != nil {
 		return fmt.Errorf("write buf: %v", err)
 	}
 	return nil

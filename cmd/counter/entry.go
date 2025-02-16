@@ -1,6 +1,6 @@
 package main
 
-//go:generate stylus-go
+//go:generate stylus-go gen
 
 import (
 	"math/big"
