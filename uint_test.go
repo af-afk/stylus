@@ -13,7 +13,7 @@ func TestMaxUint256BigShouldOverflow(t *testing.T) {
 	}()
 	Uint256FromBig(new(big.Int).Add(
 		MaxUint256Big,
-		new(big.Int).SetInt64(0),
+		new(big.Int).SetInt64(100),
 	))
 	if !didPanic {
 		t.Fail()

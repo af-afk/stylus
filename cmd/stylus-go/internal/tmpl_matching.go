@@ -17,7 +17,7 @@ func fmtByteArray(x []byte) string {
 	return buf.String()
 }
 
-func OutputMatching(w io.Writer, localFn string, sel []byte, convFns []string) error {
+func OutputMatching(w io.Writer, localFn string, sel []byte, convFns []string, returnFn string) error {
 	// TODO: handle different sized words in the calldata.
 	cdlen := len(convFns) * 32
 	s := fmtByteArray(sel)
@@ -26,12 +26,8 @@ func OutputMatching(w io.Writer, localFn string, sel []byte, convFns []string) e
 		Sel     string
 		CdLen   int
 		ConvFns []string
-	}{
-		LocalFn: localFn,
-		Sel:     s,
-		CdLen:   cdlen,
-		ConvFns: convFns,
-	})
+		ReturnFn string
+	}{localFn, s, cdlen, convFns, returnFn})
 }
 
 var TmplMatching = template.Must(template.New("matching").Parse(`
@@ -44,11 +40,12 @@ var TmplMatching = template.Must(template.New("matching").Parse(`
 		if err != nil {
 			return 1
 		}
-		{{end}}rd, err = sr.{{.LocalFn}}({{range $i, $e := .ConvFns}}x{{$i}},{{end}})
+		{{end}}rd{{.LocalFn}}, err := sr.{{.LocalFn}}({{range $i, $e := .ConvFns}}x{{$i}},{{end}})
 		if err != nil {
 			return 1
 		} else {
 			return 0
 		}
+		rd = append(rd, {{.ReturnFn}}(rd{{.LocalFn}})...)
 	}`,
 ))

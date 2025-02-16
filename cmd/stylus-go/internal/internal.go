@@ -45,7 +45,7 @@ STRUCTSEARCH:
 				continue STRUCTSEARCH
 			}
 			if focusedStruct != "" {
-				// We keep searching anyway after finding the struct key so we might
+				// We keep searching anyway after finding the struct key, so we might
 				// find an instance of someone making a mistake as a precaution
 				// against undefined behaviour with a mistake here.
 				return fmt.Errorf("finding struct: already found struct with entrypoint")
@@ -92,7 +92,7 @@ STRUCTSEARCH:
 		if focusedStruct == "" {
 			return fmt.Errorf("no struct to generate with found")
 		}
-		for _, n := range files {
+		for fname, n := range files {
 			for _, d := range n.Decls {
 				fn, ok := d.(*ast.FuncDecl)
 				if !ok {
@@ -132,18 +132,35 @@ STRUCTSEARCH:
 					var localArgs []string
 					explainedArgs, localArgs, err = explainArgs(docList, fn.Type.Params.List)
 					if err != nil {
-						return fmt.Errorf("explain args: %v: %v", fn, err)
+						return fmt.Errorf("explain args: %v: %v: %v", fname, fn, err)
 					}
 					// Create the conversion functions now from a word:
 					convFns = argsToConvFunctions(explainedArgs, localArgs)
+				}
+				// Let's also check the arguments that this function takes, and spit out
+				// some return type conversion functions if they're needed. We always expect
+				// the form (something, error), so any variations of this should cause an error
+				// here.
+				if fn.Type.Results.List == nil {
+					return fmt.Errorf("body results: %v: nil", fname)
+				}
+				returnFns, err := explainReturnFns(fn.Type.Results.List)
+				if err != nil {
+					return fmt.Errorf("explain return fns: %v: %v", fname, err)
 				}
 				// Now it's time for us to generate entrypoint code. Let's start by computing
 				// the entrypoint receiver here.
 				sel := createSelector(fn.Name.Name, explainedArgs...)
 				// Time to finally spit out some code! We use the template to do this part.
-				err = OutputMatching(&explainedBuf, fn.Name.Name, sel, convFns)
+				err = OutputMatching(
+					&explainedBuf,
+					fn.Name.Name,
+					sel,
+					convFns,
+					returnFns,
+				)
 				if err != nil {
-					return fmt.Errorf("generate functions: generate file: %v", err)
+					return fmt.Errorf("generate functions: out buf: %v", err)
 				}
 			}
 		}

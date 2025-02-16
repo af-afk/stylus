@@ -5,21 +5,16 @@ import (
 	"math/big"
 )
 
-var maxUint32Word = big.Word(^uint32(0))
+var (
+	// MaxUint256Big is 2^256 - 1.
+	MaxUint256Big = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
 
-// MaxUint256Big that could be created.
-var MaxUint256Big = new(big.Int).SetBits([]big.Word{
-	// We need 32 bit words here, since that's all we can use with
-	// the wasm backend.
-	maxUint32Word,
-	maxUint32Word,
-	maxUint32Word,
-	maxUint32Word,
-	maxUint32Word,
-	maxUint32Word,
-	maxUint32Word,
-	maxUint32Word,
-})
+	// MinInt256Big is -2^255.
+	MinInt256Big = new(big.Int).Neg(new(big.Int).Lsh(big.NewInt(1), 255))
+
+	// MaxInt256Big is 2^255 - 1.
+	MaxInt256Big = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 255), big.NewInt(1))
+)
 
 // Uint256 word for internal accounting of storage accesses/etc.
 type Uint256 [32]byte
@@ -31,22 +26,4 @@ func NewUint256(u uint32) Uint256 {
 		panic("encoding")
 	}
 	return Uint256(x)
-}
-
-// Uint256FromBig for internal storage map use presumably. Panics if
-// overflowing (and underflowing) so use with caution.
-func Uint256FromBig(x *big.Int) (u Uint256) {
-	if x.Cmp(new(big.Int)) < 0 {
-		panic("underflow")
-	}
-	if x.Cmp(MaxUint256Big) > 0 {
-		panic("overflow")
-	}
-	var b [32]byte
-	return Uint256(x.FillBytes(b[:]))
-}
-
-// BigFromUint256 type conversion.
-func BigFromUint256(x Uint256) *big.Int {
-	return new(big.Int).SetBytes(x[:])
 }
