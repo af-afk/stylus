@@ -75,7 +75,7 @@ func userEntrypoint(cdlen int32) int32 {
 		if rc != 0 {
 			return rc
 		}
-		stylus.Rd = append(stylus.Rd, stylus.BigToInt256Bytes(rdSub)...)
+		stylus.Rd = append(stylus.Rd, stylus.Uint256ToBytes(rdSub)...)
 	}
 	// Count
 	if bytes.Equal(args[:4], []byte{6,102,26,189,}) {
@@ -134,66 +134,7 @@ func userEntrypoint(cdlen int32) int32 {
 		if rc != 0 {
 			return rc
 		}
-		stylus.Rd = append(stylus.Rd, stylus.BigToInt256Bytes(rdSub)...)
-	}
-	// Count
-	if bytes.Equal(args[:4], []byte{6,102,26,189,}) {
-		var err error
-		if len(args) != 4 + 0 {
-			return 1
-		}
-		rdCount, err := sr.Count()
-		if err != nil {
-			return 1
-		} else {
-			return 0
-		}
-		if rc != 0 {
-			return rc
-		}
-		stylus.Rd = append(stylus.Rd, stylus.BigToInt256Bytes(rdCount)...)
-	}
-	// Add
-	if bytes.Equal(args[:4], []byte{16,3,226,210,}) {
-		var err error
-		if len(args) != 4 + 32 {
-			return 1
-		}
-		x0, err := stylus.BUint256ToBig(args[4+(0*32):4+32+(0*32)])
-		if err != nil {
-			return 1
-		}
-		rdAdd, err := sr.Add(x0,)
-		if err != nil {
-			return 1
-		} else {
-			return 0
-		}
-		if rc != 0 {
-			return rc
-		}
-		stylus.Rd = append(stylus.Rd, stylus.BigToInt256Bytes(rdAdd)...)
-	}
-	// Sub
-	if bytes.Equal(args[:4], []byte{250,59,214,197,}) {
-		var err error
-		if len(args) != 4 + 32 {
-			return 1
-		}
-		x0, err := stylus.BInt256ToBig(args[4+(0*32):4+32+(0*32)])
-		if err != nil {
-			return 1
-		}
-		rdSub, err := sr.Sub(x0,)
-		if err != nil {
-			return 1
-		} else {
-			return 0
-		}
-		if rc != 0 {
-			return rc
-		}
-		stylus.Rd = append(stylus.Rd, stylus.BigToInt256Bytes(rdSub)...)
+		stylus.Rd = append(stylus.Rd, stylus.Uint256ToBytes(rdSub)...)
 	}
 	// Count
 	if bytes.Equal(args[:4], []byte{6,102,26,189,}) {

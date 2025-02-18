@@ -21,11 +21,11 @@ func (s Storage) Add(x *big.Int) (*big.Int, error) {
 	return y, nil
 }
 
-func (s Storage) Sub(x *big.Int) (*big.Int, error) {
+func (s Storage) Sub(x *big.Int) (stylus.Uint256, error) {
 	y := s.Counter.Get()
 	y.Sub(y, x)
 	s.Counter.Set(y)
-	return y, nil
+	return stylus.Uint256FromBig(y), nil
 }
 
 func (s Storage) Count() (b *big.Int, err error) {
