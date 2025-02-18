@@ -1,8 +1,6 @@
 package stylus
 
-import (
-	"math/big"
-)
+import "math/big"
 
 func BInt256ToBig(x []byte) (*big.Int, error) {
 	// Check the msb to see if we're a negative number.
@@ -22,11 +20,10 @@ func BUint256ToBig(x []byte) (*big.Int, error) {
 // BigToUint256Bytes by filling out a 32 byte word, panicking if the word
 // would overflow.
 func BigToUint256Bytes(x *big.Int) [32]byte {
-	if x.Cmp(new(big.Int)) < 0 {
-		panic("underflow")
-	}
-	if x.Cmp(MaxUint256Big) > 0 {
-		panic("overflow")
+	// Check if an underflow or overflow has taken place.
+	if x.Cmp(zeroBig) < 0 || x.Cmp(MaxUint256Big) > 0 {
+		setRdUnderOverflow()
+		panic("under/overflow")
 	}
 	var b [32]byte
 	x.FillBytes(b[:])
@@ -36,11 +33,10 @@ func BigToUint256Bytes(x *big.Int) [32]byte {
 // BigToInt256Bytes by filling out a 32 byte word, panicking if the word
 // would overflow.
 func BigToInt256Bytes(i *big.Int) []byte {
-	if i.Cmp(MinInt256Big) < 0 {
-		panic("underflow")
-	}
-	if i.Cmp(MaxInt256Big) > 0 {
-		panic("overflow")
+	// Check if underflowing/overflowing.
+	if i.Cmp(MinInt256Big) < 0 || i.Cmp(MaxInt256Big) > 0 {
+		setRdUnderOverflow()
+		panic("underflow/overflow")
 	}
 	var b [32]byte
 	if i.Sign() < 0 {
@@ -58,7 +54,7 @@ func BigToInt256Bytes(i *big.Int) []byte {
 }
 
 func Uint256ToBytes(x Uint256) []byte {
-	return []byte{}
+	return x[:]
 }
 
 // Uint256FromBig for internal storage map use presumably. Panics if
@@ -78,7 +74,7 @@ func U(x *big.Int) Uint256 {
 }
 
 // BytesIdentity is a helper function for return type matching to return
-// the array as a slice.
-func BytesIdentity(b [32]byte) []byte {
-	return b[:]
+// the slice as itself.
+func BytesIdentity(b []byte) []byte {
+	return b
 }

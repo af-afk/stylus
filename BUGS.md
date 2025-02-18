@@ -1,0 +1,1 @@
+- [ ] 	MaxUint256Big = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1)) setup isn't correct in wasm (same for int). Check out why this is the case

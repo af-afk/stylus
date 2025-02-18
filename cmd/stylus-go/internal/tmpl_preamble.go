@@ -48,14 +48,20 @@ func userEntrypoint(cdlen int32) int32 {
 	stylus.PayForMemoryGrow(0)
 	args := make([]byte, cdlen)
 	stylus.ReadArgs(unsafePtr(&args))
-	var rd []byte
+	var rc int32
 	defer func() {
 		stylus.StorageFlushCache(false)
-		stylus.WriteResult(unsafePtr(&rd), int32(len(rd)))
+		stylus.WriteResult(unsafePtr(&stylus.Rd), int32(len(stylus.Rd)))
 	}()
 	if len(args) < 4 {
 		return 1
 	}
 	var sr {{.StructName}}{{range .Args}}
-	sr.{{.Name}} = {{.SetupFn}}(){{end}}`,
+	sr.{{.Name}} = {{.SetupFn}}(){{end}}
+	defer func() {
+		if r := recover(); r != nil {
+			rc = 1
+		}
+	}()
+	`,
 ))

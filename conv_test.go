@@ -26,3 +26,17 @@ func TestBigToInt256Bytes(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestBigToUint256Bytes(t *testing.T) {
+	x := "000000000000000000000000000000000000000000000000000000000000007b"
+	b, _ := hex.DecodeString(x)
+	i, err := BUint256ToBig(b)
+	if err != nil {
+		t.Logf("bytes to big: %v", err)
+		t.FailNow()
+	}
+	a := BigToUint256Bytes(i)
+	if hex.EncodeToString(a[:]) != x {
+		t.Fail()
+	}
+}

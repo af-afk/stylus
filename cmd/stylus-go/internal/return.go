@@ -24,10 +24,12 @@ func explainReturnFns(fields []*ast.Field) (fns string, err error) {
 		return "", fmt.Errorf("explain expr: %v", err)
 	}
 	switch v {
-	case "[32]byte":
+	case "[]byte":
 		return "stylus.BytesIdentity", nil
 	case "*big.Int":
 		return "stylus.BigToInt256Bytes", nil
+	case "stylus.Uint256":
+		return "stylus.Uint256ToBytes", nil
 	default:
 		// TODO: support encoding []byte and more.
 		return "", fmt.Errorf("return type: bad type: %v", v)

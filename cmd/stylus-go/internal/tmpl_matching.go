@@ -31,6 +31,7 @@ func OutputMatching(w io.Writer, localFn string, sel []byte, convFns []string, r
 }
 
 var TmplMatching = template.Must(template.New("matching").Parse(`
+	// {{.LocalFn }}
 	if bytes.Equal(args[:4], {{.Sel}}) {
 		var err error
 		if len(args) != 4 + {{.CdLen}} {
@@ -46,6 +47,9 @@ var TmplMatching = template.Must(template.New("matching").Parse(`
 		} else {
 			return 0
 		}
-		rd = append(rd, {{.ReturnFn}}(rd{{.LocalFn}})...)
+		if rc != 0 {
+			return rc
+		}
+		stylus.Rd = append(stylus.Rd, {{.ReturnFn}}(rd{{.LocalFn}})...)
 	}`,
 ))
