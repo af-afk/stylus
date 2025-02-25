@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,6 +28,8 @@ func main() {
 		}
 	case "b", "bu", "bui", "build":
 		build()
+	case "m", "ma", "mak", "make":
+		make()
 	default:
 		usage()
 	}
@@ -155,6 +158,13 @@ func build() {
 		delF(tmpName)
 		log.Fatal("tinygo run: ", err)
 	}
+	// Check if wasm-opt is in the PATH. If it's not, then we log that's the
+	// case, and we don't continue.
+	wasmOptPath, err := exec.LookPath("wasm-opt")
+	if (err != nil || wasmOptPath == "") && !dontUseWasmopt {
+		slog.Info("wasm-opt not installed, this build will be made without it. Install it using https://github.com/WebAssembly/binaryen for much smaller binaries, or disable this error notice with -no-wasm-opt", "err", err)
+		dontUseWasmopt = true
+	}
 	if dontUseWasmopt {
 		// Since the user elected not to use wasm-opt, we must move the temporary
 		// file, then shut down.
@@ -182,8 +192,20 @@ func delF(n string) {
 	}
 }
 
+func make() {
+	genDirs()
+	build()
+}
+
 func usage() {
-	fmt.Fprintf(os.Stderr, `Usage of %s: [[g[en] [-|path...]]|[b[uild] [-no-wasm-opt] [-o contract.wasm]]]
+	fmt.Fprintf(os.Stderr, `Usage of %s: [[m[ake]]|[g[en] [-|path...]]|[b[uild] [-no-wasm-opt] [-o contract.wasm]]]
+
+Commands:
+gen: Create a new generated file from the source code.
+build: Compile an already generated file using Tinygo.
+make: Create a new generated file, then compile it.
+
+Compiles to contract.wasm by default.
 `,
 		os.Args[0],
 	)

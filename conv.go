@@ -1,8 +1,11 @@
 package stylus
 
-import "math/big"
+import (
+	"fmt"
+	"math/big"
+)
 
-func BInt256ToBig(x []byte) (*big.Int, error) {
+func BytesToInt256Big(x []byte) (*big.Int, error) {
 	// Check the msb to see if we're a negative number.
 	if x[0]&0x80 == 0 {
 		// This is a positive number.
@@ -13,7 +16,7 @@ func BInt256ToBig(x []byte) (*big.Int, error) {
 	return i, nil
 }
 
-func BUint256ToBig(x []byte) (*big.Int, error) {
+func BytesToUint256Big(x []byte) (*big.Int, error) {
 	return new(big.Int).SetBytes(x), nil
 }
 
@@ -51,6 +54,19 @@ func BigToInt256Bytes(i *big.Int) []byte {
 		i.FillBytes(b[:])
 	}
 	return b[:]
+}
+
+func BytesToAddress(b []byte) (Address, error) {
+	if len(b) != 20 {
+		panic(fmt.Sprintf("bad length: %x", b))
+	}
+	var addr [20]byte
+	copy(addr[:], b)
+	return addr, nil
+}
+
+func AddressToWord(a Address) [20]byte {
+	return [20]byte(a)
 }
 
 func Uint256ToBytes(x Uint256) []byte {

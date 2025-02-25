@@ -13,7 +13,7 @@ func TestBigToInt256Bytes(t *testing.T) {
 		t.Fail()
 	}
 	ib, _ := hex.DecodeString("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9c")
-	i, err := BInt256ToBig(ib)
+	i, err := BytesToInt256Big(ib)
 	if err != nil {
 		t.Fatalf("decode str: %v", err)
 	}
@@ -30,7 +30,7 @@ func TestBigToInt256Bytes(t *testing.T) {
 func TestBigToUint256Bytes(t *testing.T) {
 	x := "000000000000000000000000000000000000000000000000000000000000007b"
 	b, _ := hex.DecodeString(x)
-	i, err := BUint256ToBig(b)
+	i, err := BytesToUint256Big(b)
 	if err != nil {
 		t.Logf("bytes to big: %v", err)
 		t.FailNow()

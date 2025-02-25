@@ -17,17 +17,22 @@ func fmtByteArray(x []byte) string {
 	return buf.String()
 }
 
-func OutputMatching(w io.Writer, localFn string, sel []byte, convFns []string, returnFn string) error {
+// OutputMatching template code to the generated file. Takes the local
+// function to do conversion from, the selector computed as keccak256,
+// all of the conversion functions needed for each argument, and whether
+// the contract actually returns a separate field for error.
+func OutputMatching(w io.Writer, localFn string, sel []byte, convFns []string, returnFn string, hasErrReturn bool) error {
 	// TODO: handle different sized words in the calldata.
 	cdlen := len(convFns) * 32
 	s := fmtByteArray(sel)
 	return TmplMatching.Execute(w, struct {
-		LocalFn string
-		Sel     string
-		CdLen   int
-		ConvFns []string
-		ReturnFn string
-	}{localFn, s, cdlen, convFns, returnFn})
+		LocalFn      string
+		Sel          string
+		CdLen        int
+		ConvFns      []string
+		ReturnFn     string
+		HasErrReturn bool
+	}{localFn, s, cdlen, convFns, returnFn, hasErrReturn})
 }
 
 var TmplMatching = template.Must(template.New("matching").Parse(`
@@ -41,8 +46,11 @@ var TmplMatching = template.Must(template.New("matching").Parse(`
 		if err != nil {
 			return 1
 		}
-		{{end}}rd{{.LocalFn}}, err := sr.{{.LocalFn}}({{range $i, $e := .ConvFns}}x{{$i}},{{end}})
+		{{end}}{{if .HasErrReturn}}rd{{.LocalFn}}, err :{{else}}err {{end}}= sr.{{.LocalFn}}({{range $i, $e := .ConvFns}}x{{$i}},{{end}})
 		if err != nil {
+			if d, ok := stylus.IsStylusErr(err); ok {
+				stylus.Rd = d
+			}
 			return 1
 		} else {
 			return 0
@@ -50,6 +58,7 @@ var TmplMatching = template.Must(template.New("matching").Parse(`
 		if rc != 0 {
 			return rc
 		}
-		stylus.Rd = append(stylus.Rd, {{.ReturnFn}}(rd{{.LocalFn}})...)
+		{{if .HasErrReturn}}
+		stylus.Rd = append(stylus.Rd, {{.ReturnFn}}(rd{{.LocalFn}})...){{end}}
 	}`,
 ))

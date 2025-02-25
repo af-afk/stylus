@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"log"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -144,8 +145,9 @@ STRUCTSEARCH:
 				if fn.Type.Results.List == nil {
 					return fmt.Errorf("body results: %v: nil", fname)
 				}
-				returnFns, err := explainReturnFns(fn.Type.Results.List)
+				returnFns, hasErrReturn, err := explainReturnFns(fn.Type.Results.List)
 				if err != nil {
+					log.Print(fn.Type.Results.List)
 					return fmt.Errorf("explain return fns: %v: %v", fname, err)
 				}
 				// Now it's time for us to generate entrypoint code. Let's start by computing
@@ -158,6 +160,7 @@ STRUCTSEARCH:
 					sel,
 					convFns,
 					returnFns,
+					hasErrReturn,
 				)
 				if err != nil {
 					return fmt.Errorf("generate functions: out buf: %v", err)

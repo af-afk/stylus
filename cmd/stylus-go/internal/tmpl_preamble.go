@@ -35,6 +35,7 @@ import (
 	"reflect"
 	"bytes"
 
+	stylusHost "github.com/af-afk/stylus/host"
 	"github.com/af-afk/stylus"
 )
 
@@ -45,13 +46,13 @@ func unsafePtr(x any) int32 {
 
 //export user_entrypoint
 func userEntrypoint(cdlen int32) int32 {
-	stylus.PayForMemoryGrow(0)
+	stylusHost.PayForMemoryGrow(0)
 	args := make([]byte, cdlen)
-	stylus.ReadArgs(unsafePtr(&args))
+	stylusHost.ReadArgs(unsafePtr(&args))
 	var rc int32
 	defer func() {
-		stylus.StorageFlushCache(false)
-		stylus.WriteResult(unsafePtr(&stylus.Rd), int32(len(stylus.Rd)))
+		stylusHost.StorageFlushCache(false)
+		stylusHost.WriteResult(unsafePtr(&stylus.Rd), int32(len(stylus.Rd)))
 	}()
 	if len(args) < 4 {
 		return 1

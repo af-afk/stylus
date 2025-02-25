@@ -31,8 +31,6 @@ type Uint256 [32]byte
 // NewUint256 from a single word. Panics if it can't encode.
 func NewUint256(u uint32) Uint256 {
 	var x [32]byte
-	if _, err := binary.Encode(x[32-4:], binary.BigEndian, u); err != nil {
-		panic("encoding")
-	}
+	binary.BigEndian.PutUint32(x[32-4:], u)
 	return Uint256(x)
 }

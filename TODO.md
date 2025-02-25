@@ -1,8 +1,6 @@
 - [ ] Actually test everything
-- [ ] Have signed checking of int256
-- [ ] Addresses, strings, byte arrays, and the bytes tower supported
+- [ ] Strings, byte arrays, and the bytes tower supported
 - [ ] Map storage type supported
-- [ ] Function return type decoding to bytes
 - [ ] Writeup explaining why I made error a return type
 - [ ] Filter for the generated file when we run our code to avoid the race condition
 - [ ] Add debugging logging to explain what's happening
